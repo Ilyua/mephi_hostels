@@ -1,1 +1,0 @@
-# mephi_hostels
