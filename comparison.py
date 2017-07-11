@@ -1,10 +1,6 @@
-import pandas as pd
-import numpy as np
-import sys
-from pprint import pprint
-import time
 import xlrd
 import argparse
+from pprint import pprint
 
 def __parser():
     parser = argparse.ArgumentParser(description='Comparison two xlsx tables',epilog="!!Support only excel!!")
