@@ -2,3 +2,6 @@ env/
 .~lock*
 *.ods
 *.xlsx
+bufer.py
+.ipynb*/
+*.ipynb
