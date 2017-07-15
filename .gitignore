@@ -5,3 +5,4 @@ env/
 bufer.py
 .ipynb*/
 *.ipynb
+*bot.py

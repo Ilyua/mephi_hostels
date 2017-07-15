@@ -1,111 +1,57 @@
 import pandas as pd
 import numpy as np
 import sys
-from pprint import pprint
 import time
-import xlrd
-
-def check_the_table(path_1):
-
-    table_1 = pd.read_excel(path_1)
-
-    Errors = []
-
-    for key in table_1.keys():
-
-        for index in range(table_1[key].size):
-            data_1=table_1[key][index]
-
-            if not check_value(key,data_1):
-
-                Errors.append({'position': (key,index),
-                               'data_1':data_1})
-    return Errors
-
-def check_value(column_name, cell_value):#column_name_function
-    # if pd.isnull(cell_value):
-    #     return True
-    if 'Адрес корпуса общежития' in column_name:
-        return check_address_of_hostel(cell_value)
-    elif 'Этаж' in column_name:
-        return check_floorcheck(cell_value)
-    elif 'Номер комнаты' in column_name:
-        return check_room_number(cell_value)
-    elif 'Кол-во койкомест' in column_name:
-        return check_places_amount(cell_value)
-    elif 'Площадь комнаты' in column_name:
-        return check_room_square(cell_value)
-    elif 'ФИО' in column_name:
-        return check_first_last_name(cell_value)
-    elif 'Номер дог' in column_name:
-        return check_contract_number(cell_value)
-    elif 'Сроки договора' in column_name:
-        return check_contract_time(cell_value)
-    elif 'Категория проживающего' in column_name:
-        return check_resident_category(cell_value)
-    elif 'Unnamed' in column_name:
-        return True
-    else:
-        print('Not found',column_name)
+import datetime
+import argparse
+from pprint import pprint
 
 
+def check_the_table(path):
 
-def check_address_of_hostel(cell_value):
-    return isinstance(cell_value,str)
+    table = pd.read_excel(path)
+    errors = []
+    check_contract_time(table,errors)
+    #check_room_area(table,errors)
+    check_gender_in_room(table,errors)
+    return errors
 
-def check_floorcheck(cell_value):
-    return isinstance(cell_value,np.int64)
 
-def check_room_number(cell_value):
-    return isinstance(cell_value,np.int64)
+def check_contract_time(table,errors):
 
-def check_places_amount(cell_value):
+    present = datetime.datetime.now()
+    for index,date in enumerate(table['date_stop']):
+        if (not pd.isnull(date)) and (present > date):
+            errors.append('Room {num}:row#{row} expired'.format(num=table['Number'][index],row=index))
 
-    return isinstance(cell_value,np.float64) and  ( not np.isnan(cell_value) )
+def check_room_area(table,errors):#Havent enought information in table, doesnt work
 
-def check_room_square(cell_value):
-    return isinstance(cell_value,np.float64)
+    pers_room = table.copy()
 
-def check_first_last_name(cell_value):
-    return isinstance(cell_value,str)
+    for index  in pers_room['person_full_name'].index:
+        if not pd.isnull(pers_room['person_full_name'][index]):
+            pers_room.set_value(index,'person_full_name',1)
+        else:
+            pers_room.set_value(index,'person_full_name',0)
 
-def check_contract_number(cell_value):
-    return True
+    for index,room  in enumerate(table['Number']):
+        if not (pers_room.loc[pers_room['Number'] == room,'person_full_name'].sum()) < ((1/6)*19):
+            errors.append('room {num}:row#{row} less than 6m^2 on one citizen '.format(num=room,row=index))
 
-def check_contract_time(cell_value):
-    return True
+def check_gender_in_room(table,errors):
 
-def check_resident_category(cell_value):
-    return isinstance(cell_value,str) or isinstance(cell_value,float)
+    pers_room = table.copy()
+    pers_room['gender'].replace(to_replace=['m', 'f'],value=[-1,1],inplace=True)
+
+    for index,room  in enumerate(table['Number']):
+        temp=pers_room.loc[pers_room['Number'] == room,['Number','gender']]
+        if  abs(temp['gender'].sum()) != temp['Number'].size:
+            errors.append('room {num}:row#{row} gender'.format(num=room,row=index))
 
 
 
-
-
-
-
-
-
-
-def is_string(cell_value):
-
-    try:
-        str(cell_value)
-        return True
-    except:
-        return False
-
-def is_float(cell_value):
-    return isinstance(cell_value, numpy.float64)
-
-
-def is_int(cell_value):
-    try:
-        int(cell_value)
-        return True
-    except:
-        return False
-
-#table_1 = pd.read_excel('./hostels.xlsx')
-pprint(check_the_table('./checking_table.xlsx'))
-
+if __name__=='__main__':
+    parser = argparse.ArgumentParser(description='Check xlsx tables',epilog="!!Support only excel!!")
+    parser.add_argument ('file',help='Path to  table for checking')
+    namespace = parser.parse_args()
+    pprint(check_the_table(namespace.file))

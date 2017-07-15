@@ -2,11 +2,6 @@ import xlrd
 import argparse
 from pprint import pprint
 
-def __parser():
-    parser = argparse.ArgumentParser(description='Comparison two xlsx tables',epilog="!!Support only excel!!")
-    parser.add_argument ('-p1','--path1',required=True,help='Path to first table for comparison')
-    parser.add_argument ('-p2','--path2',required=True,help='Path to second table for comparison')
-    return parser
 
 def __printProgressBar (iteration, total, prefix = 'Progress:', suffix = 'Complete',  decimals = 1, length = 50, fill = '█'):
     """
@@ -36,7 +31,7 @@ def comparison(path_1,path_2):
     book_2 = xlrd.open_workbook(path_2)
     sheet_2 = book_2.sheet_by_index(0)
 
-    Errors = []
+    errors = []
     if sheet_1.nrows != sheet_2.nrows or sheet_1.ncols != sheet_2.ncols:
         sys.exit('Unsuitable files for comparison')
     else:
@@ -50,17 +45,19 @@ def comparison(path_1,path_2):
                 data_1 = sheet_1.cell_value(row,col)
                 data_2 = sheet_2.cell_value(row,col)
                 if data_1 != data_2:
-                    Errors.append({'position': (row,col),
+                    errors.append({'position': (row,col),
                                     'in {}'.format(path_1):data_1,
                                     'in {}'.format(path_2):data_2})
                 i+=1
                 __printProgressBar(i, l)
-    return Errors
+    return errors
 
 if __name__=='__main__':
-    parser = __parser()
+    parser = argparse.ArgumentParser(description='Comparison two xlsx tables', epilog="!!Support only excel!!")
+    parser.add_argument ('file1', help='Path to first table for comparison')
+    parser.add_argument ('file2', help='Path to second table for comparison')
     namespace = parser.parse_args()
-    pprint(comparison(namespace.path1,namespace.path2))
+    pprint(comparison(namespace.file1,namespace.file2))
 
 
 
